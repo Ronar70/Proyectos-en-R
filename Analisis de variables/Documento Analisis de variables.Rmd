@@ -1,0 +1,137 @@
+---
+title: "Analisis de Correlacion"
+author: "Andres"
+date: '2022-05-11'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+options(width=100)
+library(knitr)
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+library(ggplot2)
+library(dplyr)
+```
+
+## Analsis de variables para un Modelo de Regresión
+
+El archivo con el cual estaremos realizando este ejercicio esta adjunto a proyecto y hace parte de una coleccion de datos spobre las partes del cuerpo pdc.
+
+El objetivo es realizar una simulacion real de validar variables en un modelo de regresion multiple donde la variable peso es la dependiente.
+
+```{r pdc}
+summary(pdc)
+```
+
+```{r pdc}
+glimpse(pdc)
+```
+
+
+# Modificamos el tipo de variables
+```{r, eval = FALSE}
+pdc$edad <- as.integer(pdc$edad)
+pdc$altura <- as.integer(pdc$altura)
+pdc$muneca <- as.integer(pdc$muneca)
+pdc$biceps <- as.integer(pdc$biceps)
+pdc$peso <- as.integer(pdc$peso)
+pdc$sexo <- as.integer(pdc$sexo)
+
+#Ejecutamos nuevamente.
+glimpse(pdc)
+```
+
+## ANALISIS DE NORMALIDAD
+obtenemos los coeficientes de correlacion de las variables numericas.
+
+```{r pressure, echo=FALSE}
+pdc_cor <- round(cor(pdc), digits = 2)
+pdc_cor
+```
+
+# Realizamos los graficos de los coeficietes de correlacion
+```{r warning=FALSE, message=FALSE, fig.width=8}
+library(ggcorrplot)
+
+ggcorrplot(pdc_cor, hc.order = TRUE, 
+           type = "lower", 
+           lab = TRUE, 
+           lab_size = 3, 
+           method="circle", 
+           colors = c("red", "white", "blue"), 
+           title="Correlacion variables  PDC", 
+           ggtheme=theme_bw)
+
+ggpairs(pdc, lower = list(continuous = "smooth"),
+        diag = list(continuous = "bar"), axisLabels = "none")
+```
+#Validamos el coeficiente de correlacion con cada las variables independientes contra va variable dependiente peso.
+
+```{r, warning=FALSE, message=FALSE, fig.width=8}
+cor.test(pdc$peso,pdc$edad)
+cor.test(pdc$peso,pdc$altura)
+cor.test(pdc$peso,pdc$muneca)
+cor.test(pdc$peso,pdc$biceps)
+```
+##Contraste de Hipotesis
+* Las hipotesis planteadas son sobre los coeficientes de correlacion
+* Ho Coeficiente = 0
+* Ha Coeficiente diferente de 0
+* Metodo del valor Pvalue
+* Ho= a favor de Ha si el nivel de significancia alfa>=Pvalue # alfha =0.05
+
+#Resultados
+  0.05>=0.521368
+  0.05>=0.7957378
+  0.05>=0.8273211
+  0.05>=0.9009023
+
+#Interpretacion
+De acuerdo se rechaza la Ho a favor de la Ha La correlacion mas fuerte es altura 0.79 edad 0.52 biceps 0.90 muneca 0.82
+
+## PRUEBA DE NORMALIDAD 
+*Si cumple la lineamidad para los dos predictores.
+*Revisamos la distribución de los datos con hist y qqnorm.
+
+```{r, warning=FALSE, message=FALSE, fig.width=8}
+hist(pdc$edad, col="blue")
+hist(pdc$altura, col="red")
+hist(pdc$muneca, co="green")
+hist(pdc$biceps, col="pink")
+
+```
+```{r, message=FALSE, fig.width=8}
+# Ahora con QQNORM
+qqnorm(pdc$edad)
+qqline(pdc$edad, pch=19, col="red")
+qqnorm(pdc$altura)
+qqline(pdc$altura, pch=19, col="blue")
+qqnorm(pdc$muneca)
+qqline(pdc$muneca, pch=19, col="blue")
+qqnorm(pdc$biceps)
+qqline(pdc$biceps, pch=19, col="blue")
+
+```
+Se evidencia que hay algunas variables que no reflejan linealidad por que debemos comprobar la linealidad mediante el contraste de hipotesis.
+
+#Validación de normalidad en los datos.
+Realizamos pruebas de Shapiro (menos de 50 obser) y Kolmogorov (mas de 50 obser)
+Para que cumpla con normalidad alfha debe ser mayor que 0.05
+
+```{r, warning=FALSE, message=FALSE, fig.width=8}
+altura_test <- shapiro.test(pdc$altura)
+print(altura_test)
+edad_test <- shapiro.test(pdc$edad)
+print(edad_test)
+munec_test <- shapiro.test(pdc$muneca)
+print(munec_test)
+biceps_test <- shapiro.test(pdc$biceps)
+print(biceps_test)
+```
+#Resultados
+* La variable altura cumple con la hipotesis Ha.
+* La variable edad  NO cumple con la hipotesis Ha.
+* La variable muneca NO cumple con la hipotesis Ha.
+* La variable biceps cumple con la hipotesis Ha.
